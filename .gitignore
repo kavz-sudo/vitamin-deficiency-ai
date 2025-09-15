@@ -1,0 +1,17 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Model files
+*.h5
+
+# Environment variables
+.env
+
+# Node.js artifacts (if you add a frontend)
+node_modules/
+dist/
+
+# OS files
+.DS_Store
+Thumbs.db

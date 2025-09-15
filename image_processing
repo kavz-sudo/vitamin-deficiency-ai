@@ -1,0 +1,53 @@
+import cv2
+import numpy as np
+
+def detect_pale_skin(frame):
+    # Convert to HSV color space for easier skin color detection
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    
+    # Define HSV range for "normal" skin tone (example values)
+    lower_skin = np.array([0, 30, 60], dtype=np.uint8)
+    upper_skin = np.array([20, 150, 255], dtype=np.uint8)
+    
+    # Mask to detect skin region
+    skin_mask = cv2.inRange(hsv, lower_skin, upper_skin)
+    
+    # Calculate the percentage of skin pixels that are in "normal" range
+    skin_pixels = cv2.countNonZero(skin_mask)
+    total_pixels = frame.shape[0] * frame.shape[1]
+    
+    skin_ratio = skin_pixels / total_pixels
+    
+    # If skin region is detected but color is very light (pale), we can give a simple warning
+    # Let's try to detect very light skin (high V and low S values in HSV)
+    pale_skin_mask = cv2.inRange(hsv, np.array([0, 0, 180]), np.array([20, 50, 255]))
+    pale_skin_pixels = cv2.countNonZero(pale_skin_mask)
+    
+    pale_skin_ratio = pale_skin_pixels / total_pixels
+    
+    return skin_ratio, pale_skin_ratio
+
+cap = cv2.VideoCapture(0)
+
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        break
+    
+    skin_ratio, pale_skin_ratio = detect_pale_skin(frame)
+    
+    # Display info on frame
+    info_text = f"Skin area: {skin_ratio*100:.2f}%, Pale skin: {pale_skin_ratio*100:.2f}%"
+    cv2.putText(frame, info_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+    
+    if pale_skin_ratio > 0.1:
+        cv2.putText(frame, "Possible Vitamin Deficiency (Pale Skin)", (10, 60),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+    
+    cv2.imshow('Vitamin Deficiency Detection', frame)
+    
+    if cv2.waitKey(1) & 0xFF == 27:  # press ESC to quit
+        break
+
+cap.release()
+cv2.destroyAllWindows()
